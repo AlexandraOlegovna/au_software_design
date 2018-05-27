@@ -28,3 +28,11 @@ class CommandExternalException(Exception):
     """
     def __init__(self, message):
         super(CommandExternalException, self).__init__(message)
+
+
+class CommandArgumentException(Exception):
+    """
+    исключение при работе argparse
+    """
+    def __init__(self, message):
+        super(CommandArgumentException, self).__init__(message)

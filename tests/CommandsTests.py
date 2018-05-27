@@ -62,3 +62,30 @@ class CommandTest(unittest.TestCase):
         command = Wc([])
         self.assertEqual(command.run("Hello, World!", env),
                          CommandResult("\t 1 \t 2 \t 13"))
+
+    def test_grep(self):
+        env = Environment()
+
+        command = Grep(["Hel", "example.txt"])
+        self.assertEqual(command.run("", env),
+                         CommandResult("Hello, World!"))
+
+        command = Grep(["hello", "example.txt", "-i", "-w"])
+        self.assertEqual(command.run("", env),
+                         CommandResult("Hello, World!"))
+
+        command = Grep(["wORld", "example.txt", "-i", "-w", "-A", "1"])
+        self.assertEqual(command.run("", env),
+                         CommandResult("Hello, World!\nBye, World!"
+                                       "\n--\n"
+                                       "Bye, World!"))
+
+        command = Grep(["!", "-A", "5"])
+        self.assertEqual(command.run("Hello, World!\nBye, World!", env),
+                         CommandResult("Hello, World!\nBye, World!"
+                                       "\n--\n"
+                                       "Bye, World!"))
+
+        command = Grep(["example", "-i", "-A", "8"])
+        self.assertEqual(command.run("Hello, World!\nBye, World!", env),
+                         CommandResult(""))

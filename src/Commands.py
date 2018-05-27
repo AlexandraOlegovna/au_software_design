@@ -3,6 +3,8 @@ from abc import ABC
 import os
 import sys
 import subprocess
+import argparse
+import re
 
 
 class CommandResult:
@@ -123,3 +125,71 @@ class Exit(Command):
     """
     def run(self, input_stream, env):
         sys.exit()
+
+
+class Grep(Command):
+    """
+    команда grep ищет строки, содержащие заданный пользователем образец
+    синтаксис: grep ОБРАЗЕЦ [имя_файла] [-i] [-w] [-A n]
+    например, grep "[1-9]" "example.txt" -i
+    флаги:
+        -i игнорирует регистр символов
+        -w ищет только строки, содержащие все слово или фразу из образца
+        -A n распечатает n строк после строки, совпадающей с образоцом
+    """
+    def __grep(self, text, args):
+        pattern = args.pattern
+        delim = "\n"
+        n = 0
+
+        flags = 0
+        if args.i:
+            flags = re.IGNORECASE
+        if args.w:
+            pattern = '\\b{}\\b'.format(pattern)
+        if args.A > 0:
+            delim = "\n--\n"
+            n = args.A
+
+        output = ""
+        is_first = True
+        lines = text.split('\n')
+        for i in range(len(lines)):
+            res = re.search(pattern, lines[i], flags)
+            if res is None:
+                continue
+            after = "\n".join(lines[(i + 1):][:n])
+            if after is not "":
+                after = "\n" + after
+            if not is_first:
+                output += delim + lines[i] + after
+            else:
+                output += lines[i] + after
+                is_first = False
+        return output
+
+    def run(self, input_stream, env):
+        # переопределение исключения при ошибке
+        class Parser(argparse.ArgumentParser):
+            def error(self, message):
+                raise CommandArgumentException(
+                    "GREP\nusage: grep [-h] [-i] [-w] [-A n] pattern [file]")
+
+        grep_parser = Parser(description="grep")
+        grep_parser.add_argument("pattern")
+        grep_parser.add_argument("file", nargs='?', default="")
+        grep_parser.add_argument('-i', action='store_true')
+        grep_parser.add_argument('-w', action='store_true')
+        grep_parser.add_argument("-A", type=int, default=0)
+
+        args = grep_parser.parse_args(self.args)
+        if args.file == "":
+            return CommandResult(self.__grep(input_stream, args))
+        else:
+            if os.path.isfile(args.file) and \
+                    os.access(args.file, os.R_OK):
+                with open(args.file, "r") as file:
+                    return CommandResult(self.__grep(file.read(), args))
+            else:
+                raise CommandFileException(
+                    "GREP error (bad permission, not exists)")

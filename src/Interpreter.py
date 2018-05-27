@@ -35,6 +35,8 @@ class Interpreter:
                 result_list.append(Pwd(delete_quotes(command.args)))
             elif name == "exit":
                 result_list.append(Exit(delete_quotes(command.args)))
+            elif name == "grep":
+                result_list.append(Grep(delete_quotes(command.args)))
             elif name == "=":
                 result_list.append(Assignment(delete_quotes(command.args)))
             else:

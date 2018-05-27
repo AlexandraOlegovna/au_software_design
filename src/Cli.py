@@ -2,6 +2,7 @@ from src.Environment import *
 from src.Parser import *
 from src.Interpreter import *
 from src.Exceptions import *
+import argparse
 
 
 class Cli:
@@ -34,3 +35,5 @@ class Cli:
                 print("File error: " + str(e))
             except CommandExternalException as e:
                 print("Command error: " + str(e))
+            except CommandArgumentException as e:
+                print("Argument error: " + str(e))
