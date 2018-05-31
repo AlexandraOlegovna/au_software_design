@@ -1,17 +1,26 @@
-import {COLS, ROWS, WALL, SPACE } from '../const';
+import {COLS, ROWS, WALL, SPACE, SPACE_RATIO } from '../const';
 
+/**
+ * описание карты
+ * @class
+ */
 export default class Map {
 
     constructor(){
+        // карта
         this._map = [];
         this.getMap = function() { return this._map; };
+        this.setMap = function(map) { this._map = map; };
     }
 
-    init_map(){
+    /**
+     * сгенерировать карту
+     */
+    generate_map(){
         for (let y = 0; y < ROWS; y++) {
             let row = [];
             for (let x = 0; x < COLS; x++) {
-                let is_wall= Math.random() > 0.8;
+                let is_wall= Math.random() > SPACE_RATIO;
                 if (is_wall)
                     row.push(WALL);
                 else
@@ -21,16 +30,27 @@ export default class Map {
         }
     }
 
+    /**
+     * символ на карте
+     * @param x
+     * @param y
+     * @return {char}
+     */
     get_symbol(x, y){
         return this._map[x][y];
     }
 
 
-    can_go(actor, dir) {
-        return actor.x + dir.x >= 0 &&
-            actor.x + dir.x <= COLS - 1 &&
-            actor.y + dir.y >= 0 &&
-            actor.y + dir.y <= ROWS - 1 &&
-            this._map[actor.y + dir.y][actor.x + dir.x] === SPACE;
+    /**
+     * можно ли переместиться на координаты position
+     * @param position
+     * @return {boolean}
+     */
+    can_move(position) {
+        return position.x >= 0 &&
+            position.x <= COLS - 1 &&
+            position.y >= 0 &&
+            position.y <= ROWS - 1 &&
+            this._map[position.y][position.x] === SPACE;
     }
 }

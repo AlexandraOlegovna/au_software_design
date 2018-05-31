@@ -4,16 +4,25 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "watch": "webpack --watch"
+    "watch": "webpack --watch",
+    "ava": "npm run precompile && NODE_ENV=test ava",
+    "test": "ava",
+    "test:watch": "ava --watch --verbose"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "ava": "1.0.0-beta.4",
     "babel-loader": "^7.1.4",
     "webpack": "^4.10.1",
     "webpack-cli": "^2.1.4"
+  },
+  "ava": {
+    "require": ["babel-register", "babel-polyfill"]
+  },
+  "babel": {
+    "presets": ["@ava/stage-4"]
   }
 }

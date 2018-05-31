@@ -92,11 +92,13 @@
 __webpack_require__.r(__webpack_exports__);
 
 // CONCATENATED MODULE: ./app/const.js
+// основные константы в игре
+
 const FONT = 40;
 const ROWS = 15;
 const COLS = 20;
 const ACTORS = 10;
-const ARMOR = 1;
+const ARTIFACTS = 1;
 const VIEW_RANGE = 6;
 const DIR_COORD = {
     left:   {x: -1, y: 0,   dir: "left"},
@@ -104,7 +106,10 @@ const DIR_COORD = {
     up:     {x: 0,  y: -1,  dir: "up"},
     down:   {x: 0,  y: 1,   dir: "down"}
 };
-const ENEMY = "e";
+const ENEMY_ICON = "e";
+const PLAYER_ICON = "i";
+const ARMOR_ICON = "@";
+const SPACE_RATIO = 0.8
 const WALL = "#";
 const SPACE = ".";
 const STYLE = {
@@ -131,18 +136,27 @@ const LOSS = {
 // CONCATENATED MODULE: ./app/map/map.js
 
 
+/**
+ * описание карты
+ * @class
+ */
 class map_Map {
 
     constructor(){
+        // карта
         this._map = [];
         this.getMap = function() { return this._map; };
+        this.setMap = function(map) { this._map = map; };
     }
 
-    init_map(){
+    /**
+     * сгенерировать карту
+     */
+    generate_map(){
         for (let y = 0; y < ROWS; y++) {
             let row = [];
             for (let x = 0; x < COLS; x++) {
-                let is_wall= Math.random() > 0.8;
+                let is_wall= Math.random() > SPACE_RATIO;
                 if (is_wall)
                     row.push(WALL);
                 else
@@ -152,29 +166,49 @@ class map_Map {
         }
     }
 
+    /**
+     * символ на карте
+     * @param x
+     * @param y
+     * @return {char}
+     */
     get_symbol(x, y){
         return this._map[x][y];
     }
 
 
-    can_go(actor, dir) {
-        return actor.x + dir.x >= 0 &&
-            actor.x + dir.x <= COLS - 1 &&
-            actor.y + dir.y >= 0 &&
-            actor.y + dir.y <= ROWS - 1 &&
-            this._map[actor.y + dir.y][actor.x + dir.x] === SPACE;
+    /**
+     * можно ли переместиться на координаты position
+     * @param position
+     * @return {boolean}
+     */
+    can_move(position) {
+        return position.x >= 0 &&
+            position.x <= COLS - 1 &&
+            position.y >= 0 &&
+            position.y <= ROWS - 1 &&
+            this._map[position.y][position.x] === SPACE;
     }
 }
-// CONCATENATED MODULE: ./app/game/drawer.js
+// CONCATENATED MODULE: ./app/game/render.js
 
 
-
-class drawer_Drawer {
+/**
+ * прорисовка игры
+ * @class
+ */
+class render_Render {
 
     constructor(){
-        this._display = []
+        this._display = [];
+        this.setDisplay = function(display) { this._display = display; };
+        this.getDisplay = function() { return this._display; };
     }
 
+    /**
+     * создание поля для игры
+     * @param game
+     */
     init(game) {
 
         function initCell(x, y) {
@@ -189,51 +223,93 @@ class drawer_Drawer {
         }
     }
 
+    /**
+     * прорисовка карты
+     * @param map
+     */
     draw_map(map) {
         for (let y = 0; y < ROWS; y++)
             for (let x = 0; x < COLS; x++)
                 this._display[y][x].content = map.get_symbol(y, x);
     }
 
+    /**
+     * отрисовка объектов на карте
+     * @param actors
+     * @param artifacts
+     */
     draw_objects(actors, artifacts) {
         this._draw_actors(actors);
         this._draw_artifacts(artifacts);
     }
 
+    /**
+     * отрисовка персонажей
+     * @param actors
+     * @private
+     */
     _draw_actors(actors) {
         for (let a = 0; a < actors.length; a++) {
             let actor = actors[a];
+            // отрисовка основного игорока
             if (a === 0) {
                 let hp = actor.getHp();
-                this._display[actor.y][actor.x].content = (hp > 10) ? "i" : hp;
+                // игрок отображется в виде его hp,
+                // если hp не помещается в один символ, то отображается основная иконка игрока
+                this._display[actor.y][actor.x].content = (hp > 10) ? actor.icon : hp;
             }
+            // отрисовка противников
             else
                 this._display[actor.y][actor.x].content = actor.icon;
         }
     }
 
+
+    /**
+     * отрисовка артефактов
+     * @param artifacts
+     * @private
+     */
     _draw_artifacts(artifacts) {
         for (let a = 0; a < artifacts.length; a++) {
             let artifact = artifacts[a];
             this._display[artifact.y][artifact.x].content = artifact.icon;
         }
     }
-
 }
 // CONCATENATED MODULE: ./app/objects/game_object.js
 
 
-
+/**
+ * основной игровой объект
+ * @class
+ */
 class game_object_GameObject {
 
+    /**
+     *
+     * @param x координата
+     * @param y координата
+     * @param icon изображение объекта на карте
+     */
     constructor(x, y, icon) {
         this.x = x;
         this.y = y;
         this.icon = icon;
     }
 
+    /**
+     * находит для объекта свободное место на карте
+     * @param map карта
+     * @param taken_places занятые места
+     */
     find_free_place(map, taken_places) {
 
+        /**
+         * случайное число от 0 до max
+         * @param max
+         * @return {number}
+         */
         function randomInt(max) {
             return Math.floor(Math.random() * max);
         }
@@ -246,28 +322,59 @@ class game_object_GameObject {
     }
 }
 
-// CONCATENATED MODULE: ./app/objects/artifacts/artifact.js
+// CONCATENATED MODULE: ./app/objects/artifacts/armor.js
 
 
-class artifact_Armor extends game_object_GameObject{
+/**
+ * артефакт для безграничной жизни
+ * @class
+ */
+class armor_Armor extends game_object_GameObject{
 
+    /**
+     *
+     * @param x координата
+     * @param y координата
+     * @param icon изображение объекта на карте
+     */
     constructor(x, y, icon) {
         super(x, y, icon);
+        this._save_hp = null;
     }
 
+    /**
+     * применить защиту
+     * @param player
+     */
     apply(player) {
+        this._save_hp = player.getHp();
         player.setHp(Infinity);
     }
 
+    /**
+     * снять защиту
+     * @param player
+     */
     unapply(player) {
-        player.setHp(3);
+        player.setHp(this._save_hp);
     }
 }
 // CONCATENATED MODULE: ./app/objects/actors/actor.js
 
 
+/**
+ * описание персонажа
+ * @class
+ */
 class actor_Actor extends game_object_GameObject{
 
+    /**
+     *
+     * @param x координата
+     * @param y координата
+     * @param hp hit points
+     * @param icon изображение объекта на карте
+     */
     constructor(x, y, hp, icon) {
         super(x, y, icon);
         this.hp = hp;
@@ -279,25 +386,51 @@ class actor_Actor extends game_object_GameObject{
 // CONCATENATED MODULE: ./app/objects/actors/player.js
 
 
+/**
+ * описание основного игрока
+ * @class
+ */
 class player_Player extends actor_Actor {
 
+    /**
+     * @param x координата
+     * @param y координата
+     * @param hp hit points
+     * @param icon изображение объекта на карте
+     */
     constructor(x, y, hp, icon) {
         super(x, y, hp, icon);
+
+        // инвентарь артефактов
         this._items = [];
     }
 
+    /**
+     * добавить артефакт в инвентарь
+     * @param item
+     */
     add_artifact(item){
         this._items.push([item, false]);
     }
 
-    use_artifact(ind) {
+    /**
+     * переключить использование артефакта
+     * @param ind
+     * @return {boolean}
+     */
+    switch_artifact(ind) {
+        // если такой артефакт есть в инвентаре
         if (ind < this._items.length) {
             let [item, is_active] = this._items[ind];
+
+            // выключаем, если он уже используется
             if (is_active) {
                 item.unapply(this);
                 this._items[ind][1] = false;
                 return false;
             }
+
+            // включаем, если он не используется
             else {
                 item.apply(this);
                 this._items[ind][1] = true;
@@ -314,42 +447,67 @@ class player_Player extends actor_Actor {
 
 
 
+/**
+ * инициализатор игры
+ */
 class initializer_GameInitializer {
 
     constructor() {}
 
+    /**
+     * инициализировать игру
+     * @param self
+     */
     static init_game(self) {
-        self.map.init_map();
 
+        // сгенерировать карту
+        self.map.generate_map();
+
+        // инициализировать игровой дисплей
         self.display.init(self.game);
 
+        // расставить персонажей
         this._init_actors(self);
 
+        // раставить артефакты
         this._init_artifacts(self);
 
+        // отрисовать карту
         self.display.draw_map(self.map);
+
+        // отрисовать персонажей
         self.display.draw_objects(self.actors, self.artifacts);
 
     }
 
-
+    /**
+     * расстановка артефактов
+     * @param self
+     * @private
+     */
     static _init_artifacts(self) {
-        for (let i = 0; i < ARMOR; ++i) {
-            let artifact = new artifact_Armor(0, 0, "@");
+        for (let i = 0; i < ARTIFACTS; ++i) {
+            let artifact = new armor_Armor(0, 0, ARMOR_ICON);
             artifact.find_free_place(self.map, self.objects_map);
             self.objects_map[[artifact.y, artifact.x]] = artifact;
             self.artifacts.push(artifact);
         }
     }
 
+    /**
+     * расстановка персонаж
+     * @param self
+     * @private
+     */
     static _init_actors(self) {
-        self.objects_map = {};
         for (let e = 0; e < ACTORS; e++) {
             let player = null;
+            // первый персонаж в списке основной игрок
             if (e === 0)
-                player = new player_Player(0, 0, 3, "i");
+                player = new player_Player(0, 0, 3, PLAYER_ICON);
+            // создание противников
             else
-                player = new actor_Actor(0, 0, 1, "e");
+                player = new actor_Actor(0, 0, 1, ENEMY_ICON);
 
             player.find_free_place(self.map, self.objects_map);
 
@@ -357,6 +515,7 @@ class initializer_GameInitializer {
             self.actors.push(player);
         }
 
+        // первый персонаж в списке основной игрок
         self.player = self.actors[0];
     }
 }
@@ -369,27 +528,50 @@ class initializer_GameInitializer {
 
 class actions_Actions {
 
+    /**
+     * совершил ли actor действие по направлению dir
+     * @param self
+     * @param actor
+     * @param dir
+     * @return {boolean} false - действия не было, true - действие свершилось
+     */
     static move_to(self, actor, dir) {
 
-        if (!self.map.can_go(actor, dir))
+        let position = {x: actor.x + dir.x, y: actor.y + dir.y};
+
+        // стена или выход за границы поля
+        if (!self.map.can_move(position))
             return false;
 
-        let position = [actor.y + dir.y, actor.x + dir.x];
-        let object = self.objects_map[position];
+        // объект, находящийся на желаемой позиции
+        let object = self.objects_map[[position.y, position.x]];
 
+        // это другой персонаж -> ударить
         if (object instanceof actor_Actor)
-            return this._fight(self, object, position, actor);
+            return this._hit(self, object, position, actor);
 
-        if (object instanceof artifact_Armor)
+        // это артефакт -> взять артефакт
+        if (object instanceof armor_Armor)
             return this._get_artifact(self, object, position, actor);
 
+        // это пустая клетка -> сделать шаг
         if (object == null)
-            return this._make_step(self, actor, dir);
+            return this._make_step(self, actor, position, dir);
     }
 
 
+    /**
+     * использовать артефакт
+     * возвращает false (использование артефакта не является действием)
+     * @param self
+     * @param ind
+     * @return {boolean}
+     */
     static use_artifact(self, ind) {
-        let res = self.player.use_artifact(ind);
+        // активация/дезакцивация артефакта
+        let res = self.player.switch_artifact(ind);
+
+        // если удалось активировать/дезактивировать артефакт
         if (res !== undefined)
             if (res)
                 console.log("Player apply artifact " + ind.toString());
@@ -400,21 +582,36 @@ class actions_Actions {
     }
 
 
+    /**
+     * действие противников
+     * @param self
+     * @param actor
+     */
     static enemy_step(self, actor) {
+
+        /**
+         * случайное число от 0 до max
+         * @param max
+         * @return {number}
+         */
         function randomInt(max) {
             return Math.floor(Math.random() * max);
         }
 
+        // разница координат между противником и основным героем
         let dx = self.player.x - actor.x;
         let dy = self.player.y - actor.y;
 
         let dirs = Object.values(DIR_COORD);
+
+        // если основной герой находится вне поля зрения противника,
+        // противник ходит случайным образом
         if (Math.abs(dx) + Math.abs(dy) > VIEW_RANGE) {
             while (!this.move_to(self, actor, dirs[randomInt(dirs.length)])) {}
             return;
         }
 
-
+        // двигаемся по направлению к игроку
         if (Math.abs(dx) > Math.abs(dy)) {
             if (dx < 0) {
                 this.move_to(self, actor, DIR_COORD.left);
@@ -430,37 +627,77 @@ class actions_Actions {
         }
     }
 
-
-    static _fight(self, enemy, position, actor) {
+    /**
+     * actor ударяет enemy на координатах position
+     * @param self
+     * @param enemy
+     * @param position
+     * @param actor
+     * @return {boolean}
+     * @private
+     */
+    static _hit(self, enemy, position, actor) {
         enemy.hp--;
+
+        // удаляем персонажа из списка и карты, если он умер
         if (enemy.hp === 0) {
-            delete self.objects_map[position];
+            delete self.objects_map[[position.y, position.x]];
             self.actors.splice(self.actors.indexOf(enemy), 1);
         }
         console.log(`Actor(${actor.x}, ${actor.y}, ${actor.icon}) hit actor(${enemy.x}, ${enemy.y}, ${enemy.icon})`);
         return true;
     }
 
-
+    /**
+     * actor поднимает artifact на координатах position
+     * @param self
+     * @param artifact
+     * @param position
+     * @param actor
+     * @return {boolean}
+     * @private
+     */
     static _get_artifact(self, artifact, position, actor) {
+        // если персонаж не основной игрок, то он не может поднять артефакт
         if (actor !== self.player)
             return false;
+
+        // добавляем артефакт в инвентарь
         self.player.add_artifact(artifact);
-        delete self.objects_map[position];
+
+        // удаляем артефакт с карты
+        delete self.objects_map[[position.y, position.x]];
+
+        // удаляем артефакт из списка существующих(ненайденных) артефактов
         self.artifacts.splice(self.artifacts.indexOf(artifact), 1);
+
         console.log(`Actor(${actor.x}, ${actor.y}, ${actor.icon}) get artifact(${artifact.x}, ${artifact.y})`);
         return true;
     }
 
 
-    static _make_step(self, actor, dir) {
+    /**
+     * actor делает шаг на координату position по направлению dir
+     * @param self
+     * @param actor
+     * @param position
+     * @param dir
+     * @return {boolean}
+     * @private
+     */
+    static _make_step(self, actor, position, dir) {
         let old_x = actor.x;
         let old_y = actor.y;
 
+        // удаляем персонажа с карты
         delete self.objects_map[[actor.y, actor.x]];
-        actor.y += dir.y;
-        actor.x += dir.x;
+
+        actor.x = position.x;
+        actor.y = position.y;
+
+        // добавляем персонажа на карту
         self.objects_map[[actor.y, actor.x]] = actor;
+
         console.log(`Actor(${old_x}, ${old_y}, ${actor.icon}) go to ${dir.dir}`);
         return true;
     }
@@ -473,79 +710,127 @@ class actions_Actions {
 
 
 
-
+/**
+ * Основной движок игры
+ * @class
+ */
 class game_GameEngine {
 
     constructor() {
+        // карта
         this.map = new map_Map();
-        this.display = new drawer_Drawer();
+
+        // дисплей игры (то, что нарисовано у пользователя)
+        this.display = new render_Render();
+
+        // основной игрок
         this.player = null;
+
+        // персонажи (основной игрок и враги)
         this.actors = [];
+
+        // артефакты
         this.artifacts = [];
+
+        // позиции всех существующих объектов на карте
         this.objects_map = {};
 
+        // объект для Phaser
+        this.game = null
+    }
+
+
+    /**
+     * инициализация игры и старт
+     * @return {Phaser.Game}
+     */
+    start() {
         let self = this;
         this.game = new Phaser.Game(COLS * FONT, ROWS * FONT, Phaser.AUTO, null, {
             create: this._create.bind(self)
         });
+
+        return this.game
     }
 
-
+    /**
+     * создание объекта для Phaser
+     * @private
+     */
     _create() {
         let self = this;
         this.game.input.keyboard.addCallbacks(null, null, this._on_key_press.bind(self));
 
+        // инициализация и отрисовка всех объектов
         initializer_GameInitializer.init_game(this);
     }
 
 
+    /**
+     * действие при нажатии на клавишу
+     * @param event
+     * @private
+     */
     _on_key_press(event) {
 
+        // отрисовка карты
         this.display.draw_map(this.map);
 
+        // было ли совершено событие в игре
+        let is_acted = false;
 
-        let acted = false;
+        // ход игрока
         switch (event.keyCode) {
             case Phaser.Keyboard.LEFT:
-                acted = actions_Actions.move_to(this, this.player, DIR_COORD.left);
+                is_acted = actions_Actions.move_to(this, this.player, DIR_COORD.left);
                 break;
 
             case Phaser.Keyboard.RIGHT:
-                acted = actions_Actions.move_to(this, this.player, DIR_COORD.right);
+                is_acted = actions_Actions.move_to(this, this.player, DIR_COORD.right);
                 break;
 
             case Phaser.Keyboard.UP:
-                acted = actions_Actions.move_to(this, this.player, DIR_COORD.up);
+                is_acted = actions_Actions.move_to(this, this.player, DIR_COORD.up);
                 break;
 
             case Phaser.Keyboard.DOWN:
-                acted = actions_Actions.move_to(this, this.player, DIR_COORD.down);
+                is_acted = actions_Actions.move_to(this, this.player, DIR_COORD.down);
                 break;
 
             case Phaser.Keyboard.ONE:
-                acted = actions_Actions.use_artifact(this, 0);
+                is_acted = actions_Actions.use_artifact(this, 0);
                 break;
         }
 
-        if (acted)
+        // ход противников, если игрок совершил действие
+        if (is_acted)
             for (let e = 1; e < this.actors.length; e++) {
                 actions_Actions.enemy_step(this, this.actors[e]);
             }
 
+        // отрисовка объектов
         this.display.draw_objects(this.actors, this.artifacts);
+
+        // отрисовка конца игры
         this._is_game_end();
     }
 
 
+    /**
+     * отрисовка конца игры
+     * @private
+     */
     _is_game_end() {
         if (this.actors.length === 1) {
             let victory = this.game.add.text(this.game.world.centerX, this.game.world.centerY, WIN.text, WIN.style);
             victory.anchor.setTo(0.5, 0.5);
+            this.game.input.keyboard.disabled = true;
         }
 
         else if (this.player.hp < 1) {
             let gameOver = this.game.add.text(this.game.world.centerX, this.game.world.centerY, LOSS.text, LOSS.style);
             gameOver.anchor.setTo(0.5, 0.5);
+            this.game.input.keyboard.disabled = true;
         }
     }
 }
@@ -554,7 +839,8 @@ class game_GameEngine {
 
 
 let main_game = new game_GameEngine();
-main_game.game;
+// запуск игры
+main_game.start();
 
 
 /***/ })
