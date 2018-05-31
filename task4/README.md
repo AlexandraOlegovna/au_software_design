@@ -1,2 +1,2 @@
 ### Bookshop
-<img src="uml_v2.svg">
+<img src="uml_v3.svg">
