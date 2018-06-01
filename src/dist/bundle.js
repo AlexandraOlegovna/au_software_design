@@ -322,14 +322,40 @@ class game_object_GameObject {
     }
 }
 
+// CONCATENATED MODULE: ./app/objects/artifacts/abstract_artifact.js
+
+
+/**
+ * абстрактный артефакт
+ * @class
+ */
+class abstract_artifact_AbstractArtifact extends game_object_GameObject{
+
+    /**
+     * применить артефакт
+     * @param player
+     */
+    apply(player) {
+        throw new TypeError("Must override method");
+    }
+
+    /**
+     * снять артефакт
+     * @param player
+     */
+    unapply(player) {
+        throw new TypeError("Must override method");
+    }
+}
 // CONCATENATED MODULE: ./app/objects/artifacts/armor.js
+
 
 
 /**
  * артефакт для безграничной жизни
  * @class
  */
-class armor_Armor extends game_object_GameObject{
+class armor_Armor extends abstract_artifact_AbstractArtifact{
 
     /**
      *
@@ -359,14 +385,14 @@ class armor_Armor extends game_object_GameObject{
         player.setHp(this._save_hp);
     }
 }
-// CONCATENATED MODULE: ./app/objects/actors/actor.js
+// CONCATENATED MODULE: ./app/objects/actors/abstract_actor.js
 
 
 /**
- * описание персонажа
+ * описание абстрактного персонажа
  * @class
  */
-class actor_Actor extends game_object_GameObject{
+class abstract_actor_AbstractActor extends game_object_GameObject{
 
     /**
      *
@@ -383,14 +409,36 @@ class actor_Actor extends game_object_GameObject{
     }
 }
 
+// CONCATENATED MODULE: ./app/objects/actors/enemy.js
+
+
+/**
+ * описание противника
+ * @class
+ */
+class enemy_Enemy extends abstract_actor_AbstractActor{
+
+    /**
+     *
+     * @param x координата
+     * @param y координата
+     * @param hp hit points
+     * @param icon изображение объекта на карте
+     */
+    constructor(x, y, hp, icon) {
+        super(x, y, hp, icon);
+    }
+}
+
 // CONCATENATED MODULE: ./app/objects/actors/player.js
+
 
 
 /**
  * описание основного игрока
  * @class
  */
-class player_Player extends actor_Actor {
+class player_Player extends abstract_actor_AbstractActor {
 
     /**
      * @param x координата
@@ -507,7 +555,7 @@ class initializer_GameInitializer {
                 player = new player_Player(0, 0, 3, PLAYER_ICON);
             // создание противников
             else
-                player = new actor_Actor(0, 0, 1, ENEMY_ICON);
+                player = new enemy_Enemy(0, 0, 1, ENEMY_ICON);
 
             player.find_free_place(self.map, self.objects_map);
 
@@ -521,6 +569,7 @@ class initializer_GameInitializer {
 }
 
 // CONCATENATED MODULE: ./app/game/actions/actions.js
+
 
 
 
@@ -547,11 +596,11 @@ class actions_Actions {
         let object = self.objects_map[[position.y, position.x]];
 
         // это другой персонаж -> ударить
-        if (object instanceof actor_Actor)
+        if (object instanceof abstract_actor_AbstractActor)
             return this._hit(self, object, position, actor);
 
         // это артефакт -> взять артефакт
-        if (object instanceof armor_Armor)
+        if (object instanceof abstract_artifact_AbstractArtifact)
             return this._get_artifact(self, object, position, actor);
 
         // это пустая клетка -> сделать шаг

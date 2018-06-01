@@ -1,10 +1,11 @@
-import Actor from './actor';
+import Enemy from './enemy';
+import AbstractActor from "./abstract_actor";
 
 /**
  * описание основного игрока
  * @class
  */
-export default class Player extends Actor {
+export default class Player extends AbstractActor {
 
     /**
      * @param x координата

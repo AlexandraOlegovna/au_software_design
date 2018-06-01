@@ -1,5 +1,5 @@
 import Artifact from "../objects/artifacts/armor";
-import Actor from "../objects/actors/actor";
+import Enemy from "../objects/actors/enemy";
 import Player from "../objects/actors/player";
 import {ACTORS, ARTIFACTS, ARMOR_ICON, ENEMY_ICON, PLAYER_ICON} from '../const';
 
@@ -63,7 +63,7 @@ export default class GameInitializer {
                 player = new Player(0, 0, 3, PLAYER_ICON);
             // создание противников
             else
-                player = new Actor(0, 0, 1, ENEMY_ICON);
+                player = new Enemy(0, 0, 1, ENEMY_ICON);
 
             player.find_free_place(self.map, self.objects_map);
 

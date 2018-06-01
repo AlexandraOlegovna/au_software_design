@@ -1,10 +1,10 @@
 import GameObject from '../game_object';
 
 /**
- * описание персонажа
+ * описание абстрактного персонажа
  * @class
  */
-export default class Actor extends GameObject{
+export default class AbstractActor extends GameObject{
 
     /**
      *

@@ -1,10 +1,11 @@
-import GameObject from '../game_object';
+import AbstractArtifact from "./abstract_artifact";
+
 
 /**
  * артефакт для безграничной жизни
  * @class
  */
-export default class Armor extends GameObject{
+export default class Armor extends AbstractArtifact{
 
     /**
      *

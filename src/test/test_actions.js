@@ -1,7 +1,7 @@
 import test from 'ava';
 import Actions from '../app/game/actions/actions';
 import Player from '../app/objects/actors/player';
-import Actor from '../app/objects/actors/actor';
+import Enemy from '../app/objects/actors/enemy';
 import {DIR_COORD, SPACE} from "../app/const";
 import GameEngine from '../app/game/game';
 import Armor from '../app/objects/artifacts/armor'
@@ -10,7 +10,7 @@ import Armor from '../app/objects/artifacts/armor'
 test('move_to player hit enemy', t => {
     let g = new GameEngine();
     g.player = new Player(0, 0, 3, "");
-    let enemy = new Actor(1, 0, 1, "");
+    let enemy = new Enemy(1, 0, 1, "");
     g.actors.push(g.player, enemy);
     g.objects_map[[0, 0]] = g.player;
     g.objects_map[[0, 1]] = enemy;
@@ -31,7 +31,7 @@ test('move_to player hit enemy', t => {
 test('move_to enemy hit player', t => {
     let g = new GameEngine();
     g.player = new Player(0, 0, 3, "");
-    let enemy = new Actor(1, 0, 1, "");
+    let enemy = new Enemy(1, 0, 1, "");
     g.actors.push(g.player, enemy);
     g.objects_map[[0, 0]] = g.player;
     g.objects_map[[0, 1]] = enemy;
@@ -74,7 +74,7 @@ test('move_to get_artifact player', t => {
 test('move_to get_artifact enemy', t => {
     let g = new GameEngine();
     g.player = new Player(0, 0, 3, "");
-    let enemy = new Actor(1, 1, 1, "");
+    let enemy = new Enemy(1, 1, 1, "");
     let armor = new Armor(1, 0);
     g.actors.push(g.player, enemy);
     g.artifacts.push(armor);
@@ -99,7 +99,7 @@ test('move_to get_artifact enemy', t => {
 test('move_to make_step enemy', t => {
     let g = new GameEngine();
     g.player = new Player(0, 0, 3, "");
-    let enemy = new Actor(1, 1, 1, "");
+    let enemy = new Enemy(1, 1, 1, "");
     g.actors.push(g.player, enemy);
     g.objects_map[[0, 0]] = g.player;
     g.objects_map[[1, 1]] = enemy;
@@ -122,7 +122,7 @@ test('move_to make_step enemy', t => {
 test('move_to make_step player', t => {
     let g = new GameEngine();
     g.player = new Player(0, 0, 3, "");
-    let enemy = new Actor(1, 1, 1, "");
+    let enemy = new Enemy(1, 1, 1, "");
     g.actors.push(g.player, enemy);
     g.objects_map[[0, 0]] = g.player;
     g.objects_map[[1, 1]] = enemy;

@@ -1,6 +1,7 @@
-import Artifact from "../../objects/artifacts/armor";
-import Actor from "../../objects/actors/actor";
+import Enemy from "../../objects/actors/enemy";
 import {DIR_COORD, VIEW_RANGE} from '../../const';
+import AbstractArtifact from "../../objects/artifacts/abstract_artifact";
+import AbstractActor from "../../objects/actors/abstract_actor";
 
 
 export default class Actions {
@@ -24,11 +25,11 @@ export default class Actions {
         let object = self.objects_map[[position.y, position.x]];
 
         // это другой персонаж -> ударить
-        if (object instanceof Actor)
+        if (object instanceof AbstractActor)
             return this._hit(self, object, position, actor);
 
         // это артефакт -> взять артефакт
-        if (object instanceof Artifact)
+        if (object instanceof AbstractArtifact)
             return this._get_artifact(self, object, position, actor);
 
         // это пустая клетка -> сделать шаг
